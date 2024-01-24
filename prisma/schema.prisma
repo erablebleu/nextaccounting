@@ -92,18 +92,18 @@ model Customer {
 }
 
 model Contact {
-    id              String   @id @default(cuid())
-    createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
-    customerId      String   @map("customer_id")
-    customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-    name            String?
-    position        String?
-    email           String   @unique
-    phoneNumber     String?  @map("phone_number")
-    allowConnection Boolean  @default(false) @map("allow_connection")
-    sendInvoice     Boolean  @default(false) @map("send_invoice")
-    sendQuotation   Boolean  @default(false) @map("send_quotation")
+    id               String   @id @default(cuid())
+    createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    customerId       String   @map("customer_id")
+    customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    name             String?
+    position         String?
+    email            String   @unique
+    phoneNumber      String?  @map("phone_number")
+    connectionEmails String[] @map("connection_emails")
+    sendInvoice      Boolean  @default(false) @map("send_invoice")
+    sendQuotation    Boolean  @default(false) @map("send_quotation")
 
     user User?
 

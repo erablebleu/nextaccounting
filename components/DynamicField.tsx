@@ -24,6 +24,7 @@ export class FieldOptions {
     error?: boolean = false
     keyFilter?: (value: string) => boolean
     validate?: (value: any) => any
+    format?: (value: any) => any
     selectOptions?: SelectOption[] = []
 }
 
@@ -49,7 +50,7 @@ export default function DynamicField({ field, data, onValueChange, disabled }) {
                 {...field.controlProps}
                 fullWidth
                 label={field.label}
-                value={data[field.propertyName] ?? ''}
+                value={(field?.format ? field.format(data[field.propertyName]) : data[field.propertyName]) ?? ''}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleValueChange(field, event.target.value)}
                 onKeyDown={(event) => (field.keyFilter?.(event.key) ?? true) || event.preventDefault()}
                 error={error}

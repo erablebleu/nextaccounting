@@ -47,10 +47,12 @@ export default function Contacts({ customers }) {
         label: 'Phone',
         containerProps: { xs: 6, md: 6 },
     }, {
-        type: 'checkbox',
-        propertyName: 'allowConnection',
-        label: 'Allow Connection',
-        containerProps: { xs: 6, md: 4 },
+        type: 'text',
+        propertyName: 'connectionEmails',
+        label: 'Connection emails',
+        containerProps: { xs: 12 },
+        format: (e: Array<string>) => e.join(' '),
+        validate: (e: string) => e.split(' ')
     }, {
         type: 'checkbox',
         propertyName: 'sendInvoice',
@@ -73,10 +75,10 @@ export default function Contacts({ customers }) {
                     email: 'name@domain.com',
                     position: '',
                     phoneNumber: '',
-                    allowConnection: true,
                     sendInvoice: false,
                     sendQuotation: false,
                     customerId: customers[0].id,
+                    connectionEmails: new Array<string>(),
                 } as Contact
                 setNewItem(item)
             }}>

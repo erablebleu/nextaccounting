@@ -3,6 +3,7 @@ import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { AdapterUser } from "next-auth/adapters";
 import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "../../../tools/db";
 import { UserRole } from "@prisma/client";
 import { GetSessionParams, getSession } from "next-auth/react";
@@ -28,36 +29,37 @@ export const authOptions: AuthOptions = {
                 data['role'] = UserRole.USER
                 return prisma.contact.findFirstOrThrow({
                     where: {
-                        email: data.email
+                        connectionEmails: {
+                            has: data.email
+                        }
                     }
                 }).then(contact => {
-                    if (!contact.allowConnection) {
-                        throw new Error('Unauthorized email')
-                    }
-
                     data['contactId'] = contact.id;
-
                     return prisma.user.create({ data });
                 }) as Awaitable<AdapterUser>;
             }
         }
     },
     providers: [
-        // EmailProvider({
-        //     server: {
-        //         host: process.env.EMAIL_SERVER_HOST,
-        //         port: process.env.EMAIL_SERVER_PORT,
-        //         auth: {
-        //             user: process.env.EMAIL_SERVER_USER,
-        //             pass: process.env.EMAIL_SERVER_PASSWORD
-        //         }
-        //     },
-        //     from: process.env.EMAIL_FROM,
-        //     maxAge: 30 * 24 * 60 * 60, // 30 days in sec
-        // }),
+        EmailProvider({
+            server: {
+                host: process.env.NEXTAUTH_PROVIDER_EMAIL_SERVER_HOST,
+                port: process.env.NEXTAUTH_PROVIDER_EMAIL_SERVER_PORT,
+                auth: {
+                    user: process.env.NEXTAUTH_PROVIDER_EMAIL_SERVER_USER,
+                    pass: process.env.NEXTAUTH_PROVIDER_EMAIL_SERVER_PASSWORD
+                }
+            },
+            from: process.env.NEXTAUTH_PROVIDER_EMAIL_FROM,
+            maxAge: 30 * 24 * 60 * 60, // 30 days in sec
+        }),
         GitHubProvider({
-            clientId: process.env.GITHUB_ID!,
-            clientSecret: process.env.GITHUB_SECRET!
+            clientId: process.env.NEXTAUTH_PROVIDER_GITHUB_CLIENT_ID!,
+            clientSecret: process.env.NEXTAUTH_PROVIDER_GITHUB_CLIENT_SECRET!
+        }),
+        GoogleProvider({
+            clientId: process.env.NEXTAUTH_PROVIDER_GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.NEXTAUTH_PROVIDER_GOOGLE_CLIENT_SECRET!
         }),
     ],
     callbacks: {
@@ -69,9 +71,11 @@ export const authOptions: AuthOptions = {
             const domain = user.email.split('@')[1].toLowerCase()
 
             return domain == process.env.COMPANY_DOMAIN
-                || await prisma.contact.findUnique({
+                || await prisma.contact.findFirst({
                     where: {
-                        email: user.email
+                        connectionEmails: {
+                            has: user.email
+                        }
                     }
                 }) != undefined
         },
