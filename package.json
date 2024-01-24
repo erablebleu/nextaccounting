@@ -1,0 +1,46 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "tarballize": "del tarball.tar && 7z a -xr@.dockerignore tarball.tar .\\*"
+    },
+    "dependencies": {
+        "@emotion/react": "^11.11.1",
+        "@emotion/styled": "^11.11.0",
+        "@mui/icons-material": "^5.14.0",
+        "@mui/material": "^5.14.0",
+        "@mui/x-data-grid": "^6.10.0",
+        "@mui/x-date-pickers": "^6.10.1",
+        "@next-auth/prisma-adapter": "^1.0.7",
+        "@paralleldrive/cuid2": "^2.2.2",
+        "@prisma/client": "^5.0.0",
+        "@types/jest": "^29.5.3",
+        "@types/react": "^18.2.14",
+        "@types/react-dom": "^18.2.6",
+        "dayjs": "^1.11.9",
+        "mui-file-input": "^2.0.6",
+        "next": "latest",
+        "next-auth": "^4.22.1",
+        "nodemailer": "^6.9.3",
+        "notistack": "^3.0.1",
+        "pdfkit": "^0.13.0",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "react-dropzone": "^14.2.3",
+        "react-use-cookie": "^1.4.0",
+        "rxjs": "^7.8.1",
+        "swr": "^2.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.4.2",
+        "@types/pdfkit": "^0.12.10",
+        "prisma": "^5.0.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.1.6"
+    },
+    "prisma": {
+        "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    }
+}

@@ -1,0 +1,13 @@
+import { UserRole } from "@prisma/client";
+import { prisma } from "../../../tools/db";
+import { ApiOption, handleApiCrudIndex } from "../../../tools/api";
+import { NextApiRequest, NextApiResponse } from "next";
+
+const options = {
+    get: { role: UserRole.ADMIN, include: { contacts: true }},
+    post: { role: UserRole.ADMIN },
+}
+
+export default async (req: NextApiRequest, res: NextApiResponse) => {
+    await handleApiCrudIndex(req, res, prisma.customer, options)
+}

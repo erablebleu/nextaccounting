@@ -1,0 +1,337 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+    USER
+    ADMIN
+}
+
+model Account {
+    id                String  @id @default(cuid())
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @map("user_id")
+
+    @@unique([provider, providerAccountId])
+    @@map("accounts")
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique @map("session_token")
+    expires      DateTime @db.Timestamptz(3)
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId       String   @map("user_id")
+
+    @@map("sessions")
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime @db.Timestamptz(3)
+
+    @@unique([identifier, token])
+    @@map("verification_tokens")
+}
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime? @map("email_verified") @db.Timestamptz(3)
+    image         String?
+    accounts      Account[]
+    sessions      Session[]
+
+    contactId String?  @unique @map("contact_id")
+    contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+    role      UserRole @default(USER)
+
+    @@map("users")
+}
+
+model Customer {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    name      String   @unique
+    siren     String
+    siret     String
+    vat       String
+    address   String?
+    website   String?
+    dataPath  String?  @map("data_path") // Data Directory
+    color     String
+
+    contacts      Contact[]
+    invoices      Invoice[]
+    quotations    Quotation[]
+    calendarTasks CalendarTask[]
+
+    @@map("customers")
+}
+
+model Contact {
+    id              String   @id @default(cuid())
+    createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    customerId      String   @map("customer_id")
+    customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    name            String?
+    position        String?
+    email           String   @unique
+    phoneNumber     String?  @map("phone_number")
+    allowConnection Boolean  @default(false) @map("allow_connection")
+    sendInvoice     Boolean  @default(false) @map("send_invoice")
+    sendQuotation   Boolean  @default(false) @map("send_quotation")
+
+    user User?
+
+    @@map("contacts")
+}
+
+model Attachment {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    filename  String
+
+    attachmentData AttachmentData?
+    invoice        Invoice?
+    quotation      Quotation?
+    purchase       Purchase?
+    shareLink      ShareLink?
+
+    @@map("attachments")
+}
+
+model AttachmentData {
+    id           String     @id @default(cuid())
+    createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    data         Bytes
+    attachmentId String     @unique @map("attachment_id")
+    attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+    @@map("attachment_datas")
+}
+
+model ShareLink {
+    id           String     @id @default(cuid())
+    createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    validity     DateTime?  @db.Timestamptz(3)
+    attachmentId String     @unique @map("attachment_id")
+    attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+    @@map("share_links")
+}
+
+model BankAccount {
+    id           String            @id @default(cuid())
+    createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    openDate     DateTime          @map("open_date") @db.Timestamptz(3)
+    lastSyncDate DateTime?         @map("last_sync_date") @db.Timestamptz(3)
+    bank         String
+    iban         String
+    bic          String
+    rib          String
+    label        String            @unique
+    apiInfo      String            @map("api_info")
+    transactions BankTransaction[]
+
+    @@map("bank_accounts")
+}
+
+model BankTransaction {
+    id            String      @id @default(cuid())
+    createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    bankAccountId String      @map("bank_account_id")
+    bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+    settledDate   DateTime    @map("settled_date") @db.Timestamptz(3)
+    label         String
+    amount        Decimal
+    transactionId String      @map("transaction_id")
+    reference     String?
+    note          String?
+
+    purchases Purchase[]
+    revenues  Revenue[]
+
+    @@map("bank_transactions")
+}
+
+model Invoice {
+    id            String      @id @default(cuid())
+    createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    state         Int
+    customerId    String      @map("customer_id")
+    customer      Customer    @relation(fields: [customerId], references: [id])
+    attachmentId  String?     @unique @map("attachment_id")
+    attachment    Attachment? @relation(fields: [attachmentId], references: [id])
+    issueDate     DateTime    @map("issue_date") @db.Timestamptz(3)
+    executionDate DateTime    @map("execution_date") @db.Timestamptz(3)
+    paymentDelay  Int         @map("payment_delay")
+    number        String?
+    title         String?
+    total         Decimal
+    totalVAT      Decimal     @map("total_vat")
+
+    items    InvoiceItem[]
+    revenues Revenue[]
+
+    @@map("invoices")
+}
+
+model Quotation {
+    id           String      @id @default(cuid())
+    createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    state        Int
+    customerId   String      @map("customer_id")
+    customer     Customer    @relation(fields: [customerId], references: [id])
+    attachmentId String?     @unique @map("attachment_id")
+    attachment   Attachment? @relation(fields: [attachmentId], references: [id])
+    issueDate    DateTime    @map("issue_date") @db.Timestamptz(3)
+    validity     Int
+    number       String?
+    title        String?
+    total        Decimal
+    totalVAT     Decimal     @map("total_vat")
+
+    items InvoiceItem[]
+
+    @@map("quotations")
+}
+
+model InvoiceItem {
+    id          String     @id @default(cuid())
+    createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    description String
+    invoiceId   String?    @map("invoice_id")
+    invoice     Invoice?   @relation(fields: [invoiceId], references: [id])
+    quotationId String?    @map("quotation_id")
+    quotation   Quotation? @relation(fields: [quotationId], references: [id])
+    price       Decimal
+    quantity    Decimal
+    title       String?
+    unit        Int
+    vatRate     Decimal    @map("vat_rate")
+    index       Int
+
+    @@map("invoice_items")
+}
+
+model Purchase {
+    id                String          @id @default(cuid())
+    createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    bankTransactionId String          @map("bank_transaction_id")
+    bankTransaction   BankTransaction @relation(fields: [bankTransactionId], references: [id])
+    amount            Decimal
+    vat               Decimal
+    attachmentId      String?         @unique @map("attachment_id")
+    attachment        Attachment?     @relation(fields: [attachmentId], references: [id])
+    vendor            String?
+    description       String?
+
+    @@map("purchases")
+}
+
+model Revenue {
+    id                String          @id @default(cuid())
+    createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    amount            Decimal
+    bankTransactionId String          @map("bank_transaction_id")
+    bankTransaction   BankTransaction @relation(fields: [bankTransactionId], references: [id])
+    invoiceId         String          @map("invoice_id")
+    invoice           Invoice         @relation(fields: [invoiceId], references: [id])
+
+    @@map("revenues")
+}
+
+model Tax {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    name      String
+    rate      Decimal
+
+    taxReportings TaxReporting[]
+
+    @@map("taxes")
+}
+
+model TaxReporting {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    taxId     String   @map("tax_id")
+    tax       Tax      @relation(fields: [taxId], references: [id])
+
+    @@map("tax_reportings")
+}
+
+model CompanyInfo {
+    id                       String   @id @default(cuid())
+    createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    creationDate             DateTime @map("creation_date") @db.Timestamptz(3)
+    address                  String
+    mail                     String
+    name                     String
+    siren                    String
+    siret                    String
+    vat                      String
+    website                  String
+    apeCode                  String
+    activity                 String
+    phoneNumber              String   @map("phone_number")
+    legalStatus              String   @map("legal_status")
+    quotationCustomHeader    String?  @map("quotation_custom_header")
+    quotationCustomFooter    String?  @map("quotation_custom_footer")
+    quotationIndex           Int      @map("quotation_index")
+    quotationNumberingFormat String   @map("quotation_numbering_format")
+    invoiceCustomHeader      String?  @map("invoice_custom_header")
+    invoiceCustomFooter      String?  @map("invoice_custom_footer")
+    invoiceIndex             Int      @map("invoice_index")
+    invoiceNumberingFormat   String   @map("invoice_numbering_format")
+
+    @@map("company_infos")
+}
+
+model CalendarTask {
+    id         String   @id @default(cuid())
+    createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+    updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+    date       DateTime @db.Timestamptz(3)
+    customerId String   @map("customer_id")
+    customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+    @@map("calendar_tasks")
+}
