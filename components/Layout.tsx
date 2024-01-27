@@ -1,16 +1,10 @@
-import { useSession } from 'next-auth/react'
 import React, { ReactElement } from 'react';
-import { AppBar, Box, ButtonGroup, Divider, Drawer, IconButton, Toolbar, Tooltip, Typography, useColorScheme } from '@mui/material';
+import { AppBar, Box, ButtonGroup, Divider, Drawer, IconButton, Toolbar, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { App } from '../context/AppContext';
-import Link from 'next/link';
 import Menu, { adminMenu, userMenu } from './Menu';
 import ProfileButton from './ProfileButton';
 import YearSelector from './YearSelector';
-import PdfViewer from './PdfViewer';
-import { getToken } from 'next-auth/jwt';
-
-const drawerWidth = 240
 
 interface Props {
     /**
@@ -33,59 +27,71 @@ export default function Layout({ children }, props: Props) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const { session, header, formActions } = App.useApp()
 
-    const container = window !== undefined ? () => window().document.body : undefined;
+    const container = window !== undefined ? () => window().document.body : undefined
+    const drawerWidth = session ? 240 : 0
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
     };
 
-    if (session) {
-        const drawer = (
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Toolbar>
+    const getMenu = () => {
+        switch (session?.role) {
+            case 'ADMIN': return adminMenu
+            case 'USER': return userMenu
+            default: return undefined
+        }
+    }
+
+    const menu = getMenu()
+
+    const drawer = (
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Toolbar>
+            </Toolbar>
+            <Divider />
+            {menu && <React.Fragment>
+                <Menu data={getMenu()} />
+                <Divider />
+            </React.Fragment>}
+            <Box sx={{ flexGrow: 1 }} />
+            {session?.role == "ADMIN" ? <YearSelector /> : undefined}
+        </Box>
+    )
+
+    return (
+        <Box sx={{ display: 'flex' }}>
+            <AppBar
+                position="fixed"
+                sx={{
+                    width: { sm: `calc(100% - ${drawerWidth}px)` },
+                    ml: { sm: `${drawerWidth}px` },
+                }}
+            >
+                <Toolbar style={{ paddingLeft: '8px', paddingRight: '5px' }}>
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={handleDrawerToggle}
+                        sx={{ mr: 2, display: { sm: 'none' } }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+
+                    <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
+                        {formActions}
+                    </ButtonGroup>
+
+                    <Box component="div" sx={{ flexGrow: 1 }}>
+                        <Typography variant='h5' align={formActions ? 'center' : 'left'}>
+                            {header?.toUpperCase()}
+                        </Typography>
+                    </Box>
+
+                    <ProfileButton />
                 </Toolbar>
-
-                <Divider />
-                <Menu data={session!['role'] == "ADMIN" ? adminMenu : userMenu} />
-                <Divider />
-                <Box sx={{ flexGrow: 1 }} />
-                {session!['role'] == "ADMIN" ? <YearSelector /> : undefined}                
-            </Box>
-        );
-
-        return (
-            <Box sx={{ display: 'flex' }}>
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        width: { sm: `calc(100% - ${drawerWidth}px)` },
-                        ml: { sm: `${drawerWidth}px` },
-                    }}
-                >
-                    <Toolbar style={{ paddingLeft: '8px', paddingRight: '5px' }}>
-                        <IconButton
-                            color="inherit"
-                            aria-label="open drawer"
-                            edge="start"
-                            onClick={handleDrawerToggle}
-                            sx={{ mr: 2, display: { sm: 'none' } }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-
-                        <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
-                            {formActions}
-                        </ButtonGroup>
-
-                        <Box component="div" sx={{ flexGrow: 1 }}>
-                            <Typography variant='h5' align={formActions ? 'center' : 'left'}>
-                                {header?.toUpperCase()}
-                            </Typography>
-                        </Box>
-
-                        <ProfileButton />
-                    </Toolbar>
-                </AppBar>
+            </AppBar>
+            {session &&
                 <Box
                     component="nav"
                     sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
@@ -118,24 +124,21 @@ export default function Layout({ children }, props: Props) {
                         {drawer}
                     </Drawer>
                 </Box>
+            }
 
-                <Box sx={{ display: 'block' }}>
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%',
-                        width: { sm: `calc(100% - ${drawerWidth}px)`, xs: '100%' },
-                        position: 'fixed',
-                        overflowY: 'auto',
-                    }}>
-                        <Toolbar />
-                            {children}
-                    </Box>
-
+            <Box sx={{ display: 'block' }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    width: { sm: `calc(100% - ${drawerWidth}px)`, xs: '100%' },
+                    position: 'fixed',
+                    overflowY: 'auto',
+                }}>
+                    <Toolbar />
+                    {children}
                 </Box>
             </Box>
-        )
-    }
-
-    return null
+        </Box>
+    )
 }

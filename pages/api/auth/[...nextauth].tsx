@@ -6,13 +6,19 @@ import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "../../../tools/db";
 import { UserRole } from "@prisma/client";
-import { GetSessionParams, getSession } from "next-auth/react";
 
 export const authOptions: AuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60,
+    },
+    pages: {
+        signIn: '/auth/signin',
+        signOut: '/',
+        error: '/auth/signin', // Error code passed in query string as ?error=
+        verifyRequest: '/auth/verifyrequest', // (used for check email message)
+        newUser: '/auth/new-user' // New users will be directed here on first sign in (leave the property out if not of interest)
     },
     adapter:
     {

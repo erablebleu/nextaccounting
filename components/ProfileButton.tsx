@@ -1,15 +1,16 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { signOut, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { Avatar, Box, Divider, IconButton, ListItemIcon, useColorScheme } from '@mui/material';
-import { Logout, Settings } from '@mui/icons-material';
+import { Login, Logout, Settings } from '@mui/icons-material';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { UserRole } from '@prisma/client';
 import { MenuInfo } from './Menu';
 import { App } from '../context/AppContext';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 export const adminMenu: Array<MenuInfo> = [
     { text: 'Taxes', href: '/admin/taxes', icon: App.Icons.Tax },
@@ -20,6 +21,7 @@ export const adminMenu: Array<MenuInfo> = [
 ];
 
 export default function ProfileButton() {
+    const router = useRouter()
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
     const [hydrated, setHydrated] = React.useState(false);
     const { data: session } = useSession();
@@ -30,10 +32,13 @@ export default function ProfileButton() {
     }, [])
 
     const handleOpenUserMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorElUser(event.currentTarget);
+        if (anchorElUser)
+            setAnchorElUser(null)
+        else
+            setAnchorElUser(event.currentTarget);
     };
     const handleCloseUserMenu = () => {
-        setAnchorElUser(null);
+        setAnchorElUser(null)
     };
 
     return (
@@ -88,12 +93,23 @@ export default function ProfileButton() {
                     }
 
                     <Divider />
-                    <MenuItem onClick={() => { signOut(); handleCloseUserMenu(); }}>
-                        <ListItemIcon>
-                            <Logout fontSize="small" />
-                        </ListItemIcon>
-                        Logout
-                    </MenuItem>
+
+                    {!session &&
+                        <MenuItem href='auth/signin' onClick={() => { signIn(); handleCloseUserMenu(); }}>
+                            <ListItemIcon>
+                                <Login fontSize="small" />
+                            </ListItemIcon>
+                            Login
+                        </MenuItem>
+                    }
+                    {session &&
+                        <MenuItem onClick={() => { signOut({redirect: true, callbackUrl: '/'}); handleCloseUserMenu(); }}>
+                            <ListItemIcon>
+                                <Logout fontSize="small" />
+                            </ListItemIcon>
+                            Logout
+                        </MenuItem>
+                    }
                 </Menu>
             </Box>
         </React.Fragment >

@@ -3,10 +3,6 @@ import { getToken } from "next-auth/jwt";
 import { NextMiddlewareWithAuth, NextRequestWithAuth, withAuth } from "next-auth/middleware"
 import { UserRole } from "@prisma/client";
 
-
-const unauthorized = () => new NextResponse('Unauthorized', { status: 401 })
-
-
 export default async function middleware(request: NextRequest, event: NextFetchEvent) {
     const token = await getToken({ req: request })
 
@@ -18,13 +14,14 @@ export default async function middleware(request: NextRequest, event: NextFetchE
         function middleware(request: NextRequestWithAuth) {
 
             if (request.nextUrl.pathname.startsWith('/share')
-                || request.nextUrl.pathname.startsWith('/api')) {
+                || request.nextUrl.pathname.startsWith('/api')
+                || request.nextUrl.pathname.startsWith('/auth')) {
                 return NextResponse.next()
             }
 
             // UNAUTHENTICATED
             if (!request.nextauth.token) {
-                return NextResponse.redirect(new URL('/api/auth/signin', request.url))
+                return NextResponse.redirect(new URL('/auth/signin', request.url))
             }
 
             // AUTHENTICATED
