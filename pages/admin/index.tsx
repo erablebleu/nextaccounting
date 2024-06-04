@@ -3,9 +3,8 @@ import useSWR from "swr";
 import { getFetcher } from "../../tools/fetcher";
 import Spinner from "../../components/Spinner";
 import { App } from "../../context/AppContext";
-import { Box, Button, Card, CardContent, CardHeader, Grid, Stack, Typography } from "@mui/material";
-import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Lock, TextRotateUp } from "@mui/icons-material";
+import { Button, ButtonGroup, Card, CardContent, CardHeader, Grid, Stack } from "@mui/material";
+import { Lock } from "@mui/icons-material";
 import useCookie from "../../hooks/useCookie";
 
 export default function () {
@@ -15,14 +14,7 @@ export default function () {
 
     // App.useHeader('Dashboard')
     App.useActions((
-        <React.Fragment>
-            {/* <Button disabled={period == 1} onClick={() => setPeriod(period - 1)}>
-                <ChevronLeft />
-            </Button>
-            {period}
-            <Button disabled={period == 12} onClick={() => setPeriod(period + 1)}>
-                <ChevronRight />
-            </Button> */}
+        <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             <Button disabled={period == 1} onClick={() => setPeriod(1)}>1</Button>
             <Button disabled={period == 2} onClick={() => setPeriod(2)}>2</Button>
             <Button disabled={period == 3} onClick={() => setPeriod(3)}>3</Button>
@@ -35,7 +27,7 @@ export default function () {
             <Button disabled={period == 10} onClick={() => setPeriod(10)}>10</Button>
             <Button disabled={period == 11} onClick={() => setPeriod(11)}>11</Button>
             <Button disabled={period == 12} onClick={() => setPeriod(12)}>Year</Button>
-        </React.Fragment>
+        </ButtonGroup>
     ), [period, depSetPeriod])
 
     if (error) return null
@@ -55,7 +47,7 @@ export default function () {
                     <Grid item key={crypto.randomUUID()} sx={{ width: '400px' }}>
                         <Card >
                             <CardHeader title={(<React.Fragment>
-                                {item.name}{new Date() > new Date(item.end) && <Lock fontSize="small" sx={{ marginLeft: 1 }}/>}
+                                {item.name}{new Date() > new Date(item.end) && <Lock fontSize="small" sx={{ marginLeft: 1 }} />}
                             </React.Fragment>)}
                                 subheader={`${new Date(item.start).toLocaleDateString()} - ${new Date(item.end).toLocaleDateString()}`} />
                             <CardContent>
@@ -70,7 +62,7 @@ export default function () {
 
                                     <Grid container >
                                         <Grid item sx={headerStyle}>
-                                                VAT
+                                            VAT
                                         </Grid>
 
                                         <Grid item xs={11} alignSelf='center'>

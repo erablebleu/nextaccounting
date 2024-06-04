@@ -1,11 +1,10 @@
-import React, { useState } from "react"
+import React from "react"
 import useSWR from "swr"
 import { App } from "../../../context/AppContext"
 import { getFetcher } from "../../../tools/fetcher"
 import useCookie from "../../../hooks/useCookie"
-import { Box, Button, Card, CardContent, CardHeader, Grid, IconButton, MenuItem, Select, SelectChangeEvent, Stack, Tooltip, Typography } from "@mui/material"
-import { DatePicker, MonthCalendar } from "@mui/x-date-pickers"
-import { ChevronLeft, ChevronRight, NetworkWifiOutlined, Rectangle, Task } from "@mui/icons-material"
+import { Box, Button, ButtonGroup, Card, Grid, MenuItem, Select, SelectChangeEvent, Stack, Tooltip, Typography } from "@mui/material"
+import { ChevronLeft, ChevronRight, Task } from "@mui/icons-material"
 import Spinner from "../../../components/Spinner"
 import dayjs from "dayjs"
 import weekYear from 'dayjs/plugin/weekYear'
@@ -37,7 +36,7 @@ export default function ({ customers }) {
 
     App.useHeader('Calendar')
     App.useActions((
-        <React.Fragment>
+        <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             <Button onClick={prev}><ChevronLeft /></Button>
             <Button disabled sx={{ width: 100 }}>{new Date(2000, month - 1, 1).toLocaleString('default', { month: 'short' })}</Button>
             <Button onClick={next}><ChevronRight /></Button>
@@ -48,7 +47,7 @@ export default function ({ customers }) {
             >
                 {customers.map((customer) => <MenuItem key={customer.id} value={customer.id} sx={{ color: customer.color }}>{customer.name}</MenuItem>)}
             </Select>
-        </React.Fragment>
+        </ButtonGroup>
     ), [month, selectedCustomer, depSetSelectedCustomer, depSetMonth])
 
     if (error || error2) return null

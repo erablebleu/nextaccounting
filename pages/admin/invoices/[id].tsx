@@ -1,8 +1,8 @@
 import React from "react";
-import { Box, Button, ButtonGroup, Card, CardHeader, Divider, Grid, InputAdornment, LinearProgress, Stack, TextField, Typography } from "@mui/material";
+import { Button, ButtonGroup, Card, CardHeader, Divider, LinearProgress, Stack, Typography } from "@mui/material";
 import { FieldOptions } from "../../../components/DynamicField";
 import EditionCard from "../../../components/EditionCard";
-import { Add, Cancel, Check, Link, Lock as LockIcon } from "@mui/icons-material";
+import { Cancel, Check, Download, Link, Lock as LockIcon, Preview } from "@mui/icons-material";
 import { prisma } from "../../../tools/db";
 import { App } from "../../../context/AppContext";
 import { Invoice } from "../../../prisma/extensions";
@@ -139,7 +139,7 @@ export default function ({ invoice, revenues, customers }) {
 
     App.useHeader(`INVOICE ${state.number ?? ''}`)
     App.useActions((
-        <React.Fragment>
+        <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             {Invoice.isDraft(state) &&
                 <Button title="Lock" onClick={handleLock}>
                     <LockIcon />
@@ -155,7 +155,17 @@ export default function ({ invoice, revenues, customers }) {
                     <Link />
                 </Button>
             }
-        </React.Fragment>
+            {(Invoice.isLocked(state) || Invoice.isImported(state)) &&
+                <Button title="Preview" onClick={() => showPDFDialog({ url: `/api/documents/${state.attachmentId}`, allowDismiss: true })}>
+                    <Preview />
+                </Button>
+            }
+            {(Invoice.isLocked(state) || Invoice.isImported(state)) &&
+                <Button title="Download" onClick={() => App.download(`/api/documents/${state.attachmentId}`, defaultErrorHandler)}>
+                    <Download />
+                </Button>
+            }
+        </ButtonGroup>
     ), [state])
 
     return (

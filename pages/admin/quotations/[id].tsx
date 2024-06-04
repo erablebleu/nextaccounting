@@ -1,8 +1,8 @@
 import React from "react";
-import { Box, Button, ButtonGroup, Card, CardHeader, Divider, Grid, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { Button, ButtonGroup, Stack } from "@mui/material";
 import { FieldOptions } from "../../../components/DynamicField";
 import EditionCard from "../../../components/EditionCard";
-import { Add, Cancel, Check, Close, Link, Lock, Lock as LockIcon } from "@mui/icons-material";
+import { Cancel, Check, Close, Link, Lock, Lock as LockIcon } from "@mui/icons-material";
 import { prisma } from "../../../tools/db";
 import { App } from "../../../context/AppContext";
 import { Invoice, Quotation } from "../../../prisma/extensions";
@@ -130,7 +130,7 @@ export default function ({ quotation, customers }) {
 
     App.useHeader(`QUOTATION ${state.number ?? ''}`)
     App.useActions((
-        <React.Fragment>
+        <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             {Quotation.isDraft(state) &&
                 <Button title="Lock" onClick={handleLock}>
                     <LockIcon />
@@ -151,7 +151,7 @@ export default function ({ quotation, customers }) {
                     <Link />
                 </Button>
             }
-        </React.Fragment>
+        </ButtonGroup>
     ), [state])
 
     return (
