@@ -5,6 +5,7 @@ import { App } from '../context/AppContext';
 import Menu, { adminMenu, userMenu } from './Menu';
 import ProfileButton from './ProfileButton';
 import YearSelector from './YearSelector';
+import MiniCalendar from './MiniCalendar';
 
 interface Props {
     /**
@@ -54,7 +55,10 @@ export default function Layout({ children }, props: Props) {
                 <Divider />
             </React.Fragment>}
             <Box sx={{ flexGrow: 1 }} />
-            {session?.role == "ADMIN" ? <YearSelector /> : undefined}
+            {session?.role == "ADMIN" && <React.Fragment>
+                <MiniCalendar />
+                <YearSelector />
+            </React.Fragment>}
         </Box>
     )
 
