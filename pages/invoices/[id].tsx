@@ -6,7 +6,7 @@ import { prisma } from "../../tools/db";
 import { getSession } from "next-auth/react";
 
 export default function ({ invoice, invoiceItems, revenues }) {
-    App.useHeader(`INVOICES`)
+    App.useHeader(`Invoices`)
 
     return (
         <Stack margin={1} spacing={1}>

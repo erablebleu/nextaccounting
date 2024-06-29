@@ -41,7 +41,7 @@ export default function () {
     const { data, error, mutate } = useSWR(`/api/purchases?y=${year}`, getFetcher, {})
     const router = useRouter()
 
-    App.useHeader('PURCHASES')
+    App.useHeader('Purchases')
 
     if (error) return null
     if (!data) return <Spinner />

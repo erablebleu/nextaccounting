@@ -137,7 +137,7 @@ export default function ({ invoice, revenues, customers }) {
         }
     }
 
-    App.useHeader(`INVOICE ${state.number ?? ''}`)
+    App.useHeader(`Invoice ${state.number ?? ''}`)
     App.useActions((
         <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             {Invoice.isDraft(state) &&

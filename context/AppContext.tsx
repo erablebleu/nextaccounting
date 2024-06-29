@@ -100,8 +100,12 @@ export namespace App {
         const { setHeader } = useApp()
 
         React.useEffect(() => {
+            document.title = header
             setHeader(header)
-            return () => setHeader('')
+            return () => {                
+                document.title = ''
+                setHeader('')
+            }
         }, deps);
     }
 

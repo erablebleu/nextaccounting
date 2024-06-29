@@ -128,7 +128,7 @@ export default function ({ quotation, customers }) {
             )
     }
 
-    App.useHeader(`QUOTATION ${state.number ?? ''}`)
+    App.useHeader(`Quotation ${state.number ?? ''}`)
     App.useActions((
         <ButtonGroup sx={{ margin: 0, height: '45px' }} variant="outlined">
             {Quotation.isDraft(state) &&
