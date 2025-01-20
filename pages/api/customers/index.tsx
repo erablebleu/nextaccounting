@@ -4,7 +4,7 @@ import { ApiOption, handleApiCrudIndex } from "../../../tools/api";
 import { NextApiRequest, NextApiResponse } from "next";
 
 const options = {
-    get: { role: UserRole.ADMIN, include: { contacts: true }},
+    get: { role: UserRole.ADMIN},
     post: { role: UserRole.ADMIN },
 }
 
