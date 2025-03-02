@@ -16,7 +16,7 @@ type EditableCardPropsType = {
     apiService: ApiService,
     onChange?: () => void,
     onStartEdition?: () => void,
-    onEndEdition?: (saved: boolean) => void,
+    onEndEdition?: (saved: boolean, state?: any) => void,
     disableEdition?: boolean,
     customFields?: any,
     customMenu?: Array<ContextMenuItem>,
@@ -60,7 +60,7 @@ export default function ({ children, data, fields, headerProps, editingHeaderPro
                 .then((res: Response) => {
                     enqueueSnackbar(`Item successfully updated !`, { variant: 'success' })
                     onChange?.()
-                    onEndEdition?.(true)
+                    onEndEdition?.(true, state)
                     setEdition(false)
                 })
                 .catch(defaultErrorHandler)
@@ -70,7 +70,7 @@ export default function ({ children, data, fields, headerProps, editingHeaderPro
                 .then((res: Response) => {
                     enqueueSnackbar(`Item successfully created !`, { variant: 'success' })
                     onChange?.()
-                    onEndEdition?.(true)
+                    onEndEdition?.(true, state)
                     setEdition(false)
                 })
                 .catch(defaultErrorHandler)
@@ -78,7 +78,7 @@ export default function ({ children, data, fields, headerProps, editingHeaderPro
     }
 
     const handleCancel = async () => {
-        onEndEdition?.(true)
+        onEndEdition?.(false)
         setEdition(false)
     }
 

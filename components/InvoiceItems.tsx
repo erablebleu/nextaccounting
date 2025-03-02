@@ -9,6 +9,7 @@ import Spinner from "./Spinner"
 import { Add } from "@mui/icons-material"
 import EditableCard from "./EditableCard"
 import { InvoiceItem } from "../prisma/extensions"
+import { useLocalStorage } from "../hooks/useLocalstorage"
 
 const itemsFields: FieldOptions[] = [{
     type: 'text',
@@ -42,7 +43,7 @@ const itemsFields: FieldOptions[] = [{
         InvoiceItemUnit.CHARACTER,
     ].map((unit: InvoiceItemUnit) => ({
         value: unit, label: InvoiceItemUnitLabel.get(unit) as string
-    }))
+    })),
 }, {
     type: 'text',
     propertyName: 'price',
@@ -67,6 +68,12 @@ export default function ({ onChange, url, defaultProperties, disabled }) {
     const { api } = App.useApp()
     const { data, error, mutate } = useSWR(url, getFetcher, {})
     const [newItem, setNewItem] = React.useState<any | undefined>(undefined)
+    const [defaultItem, setDefaultItem] = useLocalStorage('invoice.defaultitem', {
+        price: 500,
+        quantity: 5,
+        unit: InvoiceItemUnit.DAY,
+        vatRate: 0.2,
+    })
 
     if (error) return null
     if (!data) return <Spinner />
@@ -74,17 +81,29 @@ export default function ({ onChange, url, defaultProperties, disabled }) {
     const handleAdd = async () => {
         setNewItem({
             ...defaultProperties,
+            ...defaultItem,
             title: 'New Item',
             description: '',
-            price: 500,
-            quantity: 5,
-            unit: InvoiceItemUnit.DAY,
-            vatRate: 0.2,
             index: Math.max(0, ...data.map(item => item.index)) + 1,
         })
     }
 
-    const getItemControl = (invoiceItem: any, onEndEdition?: any) => (
+    function handleEndEdition(saved: boolean, item: any) {
+        if (!item.id)
+            setNewItem(undefined)
+
+        if (saved && item) {
+            setDefaultItem({
+                ...defaultItem,
+                quantity: item.quantity,
+                price: item.price,
+                unit: item.unit,
+                vatRate: item.vatRate
+            })
+        }
+    }
+
+    const getItemControl = (invoiceItem: any) => (
         <EditableCard
             disableEdition={disabled}
             key={crypto.randomUUID()}
@@ -108,7 +127,7 @@ export default function ({ onChange, url, defaultProperties, disabled }) {
                 mutate()
                 onChange()
             }}
-            onEndEdition={onEndEdition}
+            onEndEdition={handleEndEdition}
         />)
 
     return (
@@ -129,7 +148,7 @@ export default function ({ onChange, url, defaultProperties, disabled }) {
                             }
                         </Grid>
                     </Box>
-                    {newItem && getItemControl(newItem, () => setNewItem(undefined))}
+                    {newItem && getItemControl(newItem)}
                     {data.map((item) => getItemControl(item))}
                 </React.Fragment>
             }
