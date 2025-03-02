@@ -9,7 +9,7 @@ import Spinner from "./Spinner"
 import { Add } from "@mui/icons-material"
 import EditableCard from "./EditableCard"
 import { InvoiceItem } from "../prisma/extensions"
-import { useLocalStorage } from "../hooks/useLocalstorage"
+import { useLocalStorage } from "../hooks/useLocalStorage"
 
 const itemsFields: FieldOptions[] = [{
     type: 'text',
