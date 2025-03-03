@@ -98,17 +98,6 @@ const options = {
             else {
                 data.total = 0
                 data.totalVAT = 0
-                data.items = {
-                    create: {
-                            title: 'New Item',
-                            description: '',
-                            price: 500,
-                            quantity: 5,
-                            unit: InvoiceItemUnit.DAY,
-                            vatRate: 0.2,
-                            index: 0,
-                    }
-                }
             }
 
             return await prisma.invoice.create({ data })
