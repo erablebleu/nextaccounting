@@ -20,7 +20,7 @@ export async function updateQuotationTotal(req: NextApiRequest, res: NextApiResp
 const options = {
     put: { role: UserRole.ADMIN, callback: async (req: NextApiRequest, res: NextApiResponse, token: JWT, option: ApiOption) => {
         const id = req.query.id as string
-        const quotation = await prisma.quotation.findUnique({ where: { id } })
+        const quotation = await prisma.quotation.findUnique({ where: { id }, include: { items: true } })
 
         if(quotation?.state != QuotationState.DRAFT) {
             throw new Error(`Quotation can't be updated`)
@@ -28,7 +28,11 @@ const options = {
 
         return await prisma.quotation.update({
             where: { id },
-            data: req.body,
+            data: {
+                ...req.body,
+                total: Quotation.getTotal(quotation),
+                totalVAT:  Quotation.getTotalVAT(quotation),
+            }
         })
     } },
     get: { role: UserRole.ADMIN },

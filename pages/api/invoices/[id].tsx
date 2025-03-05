@@ -20,7 +20,7 @@ export async function updateInvoiceTotal(req: NextApiRequest, res: NextApiRespon
 const options = {
     put: { role: UserRole.ADMIN, callback: async (req: NextApiRequest, res: NextApiResponse, token: JWT, option: ApiOption) => {
         const id = req.query.id as string
-        const invoice = await prisma.invoice.findUnique({ where: { id } })
+        const invoice = await prisma.invoice.findUnique({ where: { id }, include: { items: true } })
 
         if(invoice?.state != InvoiceState.DRAFT) {
             throw new Error(`Invoice can't be updated`)
@@ -28,7 +28,11 @@ const options = {
 
         return await prisma.invoice.update({
             where: { id },
-            data: req.body,
+            data: {
+                ...req.body,
+                total: Invoice.getTotal(invoice),
+                totalVAT:  Invoice.getTotalVAT(invoice),
+            },
         })
     } },
     get: { role: UserRole.ADMIN },

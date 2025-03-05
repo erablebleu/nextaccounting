@@ -110,7 +110,11 @@ export default function ({ quotation, customers }) {
         await api.quotation.update(state.id, state)
             .then((res: Response) => {
                 enqueueSnackbar(`Item successfully updated !`, { variant: 'success' })
-                setState(state)
+                setState(prev => ({
+                    ...state,
+                    total: prev.total,
+                    totalVAT: prev.totalVAT,
+                }))
             })
             .catch(defaultErrorHandler)
     }
