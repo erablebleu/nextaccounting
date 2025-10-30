@@ -2,67 +2,49 @@ import { UserRole } from "@prisma/client";
 import { prisma } from "../../../tools/db";
 import { securize } from "../../../tools/api";
 import { NextApiRequest, NextApiResponse } from "next";
-import dayjs from "dayjs";
+import { BankingProvider, IBankingClient } from "../../../tools/banking/banking";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => securize(req, res, UserRole.ADMIN, async () => {
-    const allTransactions: Array<any> = []
+    const result: Array<any> = []
     const date = new Date()
 
-    for(const bankAccount of await prisma.bankAccount.findMany()) {
-        switch(bankAccount.bank.toUpperCase()) {
-            case 'QONTO':
-                const transactions: Array<any> = []
-                var uri = `https://thirdparty.qonto.com/v2/transactions?sort_by=settled_at:asc&iban=${bankAccount.iban.replaceAll(' ', '')}`
-                var page = 1
-                
-                if(bankAccount.lastSyncDate) {
-                    uri += `&settled_at_from=${dayjs(bankAccount.lastSyncDate).toISOString()}`
+    for (const bankAccount of await prisma.bankAccount.findMany()) {
+        const client: IBankingClient = BankingProvider.getClient(bankAccount)
+
+        const allTransactions: Array<any> = await client.getTransactions({
+            iban: bankAccount.iban,
+            from: bankAccount.lastSyncDate,
+            to: date,
+        })
+        const existingTransactions = await prisma.bankTransaction.findMany({
+            where: {
+                transactionId: {
+                    in: allTransactions.map(transaction => transaction.transactionId)
                 }
-                uri += `&settled_at_to=${dayjs(date).toISOString()}`
+            },
+            select: {
+                transactionId: true
+            }
+        })
+        const existingIds = existingTransactions.map(transaction => transaction.transactionId)
+        const newTransactions: Array<any> = allTransactions.filter(transaction => !existingIds.includes(transaction.transactionId))
 
-                var qdata: any = undefined
-                do {
-                    // console.log(`fetch at ${uri + `&current_page=${page}`}`)
-                    const qres = await fetch(uri + `&current_page=${page}`, { method: 'GET', headers: {
-                        accept: 'application/json, text/plain',
-                        authorization: bankAccount.apiInfo,
-                    } })
-                    qdata = await qres.json()
-                    
-                    for(const transaction of qdata.transactions) {
-                        if(!await prisma.bankTransaction.findFirst({ where: { transactionId: transaction.transaction_id }})){
-                            transactions.push({
-                                bankAccountId: bankAccount.id,
-                                amount: transaction.side == 'debit' ? -transaction.amount : transaction.amount,
-                                label: transaction.label,
-                                reference: transaction.reference,
-                                settledDate: transaction.settled_at,
-                                transactionId: transaction.transaction_id,
-                            })
-                        }
-                    }
-
-                    page++
-
-                } while(qdata?.meta?.next_page)
-
-                await prisma.bankTransaction.createMany({
-                    data: transactions
-                })
-
-                await prisma.bankAccount.update({
-                    where: {
-                        id: bankAccount.id
-                    },
-                    data: {
-                        lastSyncDate: date
-                    }
-                })
-
-                allTransactions.push(...transactions)
-            break
+        if (newTransactions.length > 0) {
+            await prisma.bankTransaction.createMany({
+                data: newTransactions.map(transaction => ({
+                    ...transaction,
+                    bankAccountId: bankAccount.id,
+                }))
+            })
         }
+
+        await prisma.bankAccount.update({
+            where: { id: bankAccount.id },
+            data: { lastSyncDate: date }
+        })
+
+        result.push(...newTransactions)
     }
 
-    return res.status(200).json({ transactions: allTransactions })
+    return res.status(200).json({ transactions: result })
 })
