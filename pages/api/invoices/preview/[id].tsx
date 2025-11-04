@@ -2,9 +2,8 @@ import { UserRole } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { securize } from "../../../../tools/api";
 import { prisma } from "../../../../tools/db";
-import { PDF } from "../../../../tools/pdf";
-import { getNextInvoiceNumber } from "..";
 import { InvoiceState } from "../../../../tools/enums";
+import { IInvoiceGenerator, InvoiceGenerator } from "../../../../tools/invoice/generator";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => securize(req, res, UserRole.ADMIN, async () => {   
     const invoice = await prisma.invoice.findUnique({ where: { id: req.query.id as string }, include: { items: true, customer: true } })
@@ -15,9 +14,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => securize(req
     if(invoice.state != InvoiceState.DRAFT) {
         throw new Error('Invoice is not a draft')
     }
+    
+    const generator: IInvoiceGenerator = await InvoiceGenerator.getGenerator()
+    const buffer = await generator.previewInvoice(invoice)
 
-    invoice.number = await getNextInvoiceNumber()
-    const buffer = await PDF.generate('invoice', invoice)
     res.writeHead(200, {
         'accept-ranges': 'bytes',
         'Content-Length': buffer.length,

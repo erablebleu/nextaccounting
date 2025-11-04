@@ -2,30 +2,28 @@ import { UserRole } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import { securize } from "../../../../tools/api";
 import { prisma } from "../../../../tools/db";
-import { PDF } from "../../../../tools/pdf";
 import { InvoiceState } from "../../../../tools/enums";
 import { Invoice } from "../../../../prisma/extensions";
-import { getNextInvoiceNumber } from "..";
+import { IInvoiceGenerator, InvoiceGenerator } from "../../../../tools/invoice/generator";
 
 export default async (req: NextApiRequest, res: NextApiResponse) => securize(req, res, UserRole.ADMIN, async () => {
     const id = req.query.id as string
     const invoice = await prisma.invoice.findUnique({ where: { id }, include: { items: true, customer: true } })
-    
-    if(!invoice) {
+
+    if (!invoice) {
         throw new Error('Unknwon invoice')
     }
-    if(invoice.state != InvoiceState.DRAFT) {
+    if (invoice.state != InvoiceState.DRAFT) {
         throw new Error('Invoice is not a draft')
     }
 
-    invoice.number = await getNextInvoiceNumber()
-    const buffer = await PDF.generate('invoice', invoice)
+    const generator: IInvoiceGenerator = await InvoiceGenerator.getGenerator()
+    const invoiceResult = await generator.finalizeInvoice(invoice)
 
-    await prisma.companyInfo.updateMany({ data: { invoiceIndex: { increment: 1, } } })    
-    return res.status(200).json(await prisma.invoice.update({
+    const result = await prisma.invoice.update({
         where: { id },
         data: {
-            number: invoice.number,
+            number: invoiceResult.number,
             state: InvoiceState.LOCKED,
             total: Invoice.getTotal(invoice),
             totalVAT: Invoice.getTotalVAT(invoice),
@@ -34,7 +32,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => securize(req
                     filename: `${invoice.number}.pdf`,
                     attachmentData: {
                         create: {
-                            data: buffer
+                            data: invoiceResult.pdfData
                         }
                     },
                     shareLink: {
@@ -44,5 +42,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => securize(req
                 }
             },
         }
-    }));
+    })
+
+    return res.status(200).json(result)
 })

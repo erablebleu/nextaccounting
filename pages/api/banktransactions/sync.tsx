@@ -11,11 +11,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => securize(req
     for (const bankAccount of await prisma.bankAccount.findMany()) {
         const client: IBankingClient = BankingProvider.getClient(bankAccount)
 
-        const allTransactions: Array<any> = await client.getTransactions({
-            iban: bankAccount.iban,
-            from: bankAccount.lastSyncDate,
-            to: date,
-        })
+        const allTransactions: Array<any> = await client.getTransactions(bankAccount.lastSyncDate, date)
         const existingTransactions = await prisma.bankTransaction.findMany({
             where: {
                 transactionId: {

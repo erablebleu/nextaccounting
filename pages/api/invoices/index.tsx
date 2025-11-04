@@ -5,6 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { JWT } from "next-auth/jwt";
 import { InvoiceItemUnit, InvoiceState } from "../../../tools/enums";
 import dayjs from "dayjs";
+import { IInvoiceGenerator, InvoiceGenerator } from "../../../tools/invoice/generator";
 
 export async function getNextInvoiceNumber(): Promise<string> {
     const companyInfo = await prisma.companyInfo.findFirst()
@@ -61,9 +62,11 @@ const options = {
         role: UserRole.ADMIN,
         callback: async (req: NextApiRequest, res: NextApiResponse, token: JWT, option: ApiOption) => {
             const id = req.body.id
+            const generator: IInvoiceGenerator = await InvoiceGenerator.getGenerator()
 
             const data: any = {
-                state: InvoiceState.DRAFT,
+                state: InvoiceState.DRAFT,                
+                number: await generator.getInvoiceDraftNumber(),
                 issueDate: new Date(),
                 executionDate: new Date(),
                 customerId: (await prisma.customer.findFirst())!.id,
@@ -72,11 +75,13 @@ const options = {
                 paymentDelay: 30,
             }
 
-            if (id) {
+            if (id) { // COPY
                 const invoice = await prisma.invoice.findUnique({ where: { id }, include: { items: true } })
+
                 if (!invoice) {
                     throw new Error('Unknwon invoice')
                 }
+
                 data.title = invoice.title
                 data.total = invoice.total
                 data.totalVAT = invoice.totalVAT
@@ -95,7 +100,7 @@ const options = {
                     }
                 }
             }
-            else {
+            else { // CREATE
                 data.total = 0
                 data.totalVAT = 0
             }
