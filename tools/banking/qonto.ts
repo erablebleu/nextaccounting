@@ -105,7 +105,7 @@ export class QontoClient implements IBankingClient, IInvoiceGenerator {
             
         await prisma.companyInfo.updateMany({ data: { invoiceIndex: { increment: 1, } } })
 
-        return `draft_${companyInfo.invoiceIndex}`
+        return `draft_${String(companyInfo.invoiceIndex + 1).padStart(3, '0')}`
     }
 
     /**
