@@ -139,7 +139,7 @@ export class QontoClient implements IBankingClient, IInvoiceGenerator {
             issue_date: dayjs(invoice.issueDate).format('YYYY-MM-DD'),
             due_date: dayjs(invoice.issueDate).add(30, 'day').format('YYYY-MM-DD'),
             currency: 'EUR',
-            payment_methods: { iban: this._iban },
+            payment_methods: { iban: this._iban.replaceAll(' ', '') },
             status: 'draft',
             items: invoice.items.map(item => ({
                 title: item.title,
